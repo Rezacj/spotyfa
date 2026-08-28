@@ -1,0 +1,83 @@
+name: spotyfa
+description: "پخش موسیقی آفلاین - SpotyFa Offline Music Player"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # =============================================
+  # 📦 STATE MANAGEMENT
+  # =============================================
+  flutter_riverpod: ^2.6.1
+  
+  # =============================================
+  # 🗄️ DATABASE & STORAGE
+  # =============================================
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  shared_preferences: ^2.3.2          # 👈 برای ذخیره تنظیمات
+  path_provider: ^2.1.4               # 👈 نسخه پایدارتر از 2.1.5
+  
+  # =============================================
+  # 🎵 AUDIO & MUSIC
+  # =============================================
+  just_audio: ^0.9.46                 # 👈 نسخه stable و تست شده
+  audio_service: ^0.18.19             # 👈 سازگار با just_audio 0.9.46
+  on_audio_query: ^2.9.0              # 👈 همین نسخه خوبه
+  
+  # =============================================
+  # 📱 DEVICE & PERMISSIONS
+  # =============================================
+  permission_handler: ^11.3.1         # 👈 همین نسخه خوبه
+  
+  # =============================================
+  # 🎨 UI & UTILITIES
+  # =============================================
+  gap: ^3.0.1
+  cupertino_icons: ^1.0.8
+  cached_network_image: ^3.3.1        # 👈 نسخه پایدارتر از 3.4.1
+  flutter_svg: ^2.0.10+1              # 👈 نسخه پایدارتر از 2.3.0
+  liquid_glass_widgets: ^1.1.0
+  # =============================================
+  # 🛠️ UTILS
+  # =============================================
+  path: ^1.9.0                        # 👈 نسخه stable
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+  # =============================================
+  # 🔧 CODE GENERATION
+  # =============================================
+  build_runner: ^2.4.13
+  isar_generator: ^3.1.0+1
+  
+  # =============================================
+  # 📏 LINTING & ANALYSIS
+  # =============================================
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    - family: Dana
+      fonts:
+        - asset: assets/fonts/Dana-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Dana-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Dana-DemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Dana-Bold.ttf
+          weight: 700

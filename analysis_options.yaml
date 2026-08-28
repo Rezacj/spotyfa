@@ -1,0 +1,51 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+  
+  errors:
+    missing_required_param: error
+    missing_return: error
+    must_be_immutable: error
+
+linter:
+  rules:
+    # Performance
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_const_declarations: true
+    unnecessary_const: true
+    
+    # Code Quality
+    always_declare_return_types: true
+    avoid_empty_else: true
+    avoid_print: true
+    avoid_relative_lib_imports: true
+    avoid_slow_async_io: true
+    avoid_unnecessary_containers: true
+    avoid_web_libraries_in_flutter: true
+    
+    # Naming
+    camel_case_types: true
+    constant_identifier_names: true
+    file_names: true
+    library_names: true
+    non_constant_identifier_names: true
+    
+    # Style
+    prefer_final_fields: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    require_trailing_commas: true
+    sort_child_properties_last: true
+    use_key_in_widget_constructors: true
+    use_super_parameters: true
