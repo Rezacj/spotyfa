@@ -15,6 +15,9 @@ class AlbumModel {
   late String artist;
 
   String? coverPath;
+  int? year;
 
   final songs = IsarLinks<SongModel>();
+
+  int get songCount => songs.length;
 }

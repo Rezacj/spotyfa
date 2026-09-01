@@ -43,3 +43,34 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# =============================================
+# 🔐 Signing & Secrets
+# =============================================
+android/key.jks
+android/key.properties
+android/app/key.properties
+key.jks
+key.properties
+*.jks
+*.keystore
+
+# =============================================
+# 🔑 Environment
+# =============================================
+.env
+.env.*
+!.env.example
+
+# =============================================
+# 🗄️ Local Database
+# =============================================
+*.db
+*.sqlite
+*.sqlite3
+
+# =============================================
+# 📦 Generated files
+# =============================================
+*.g.dart
+*.freezed.dart

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:on_audio_query/on_audio_query.dart';
@@ -33,6 +35,7 @@ class AudioQueryService {
           ..title = song.title
           ..artist = song.artist ?? 'نامشخص'
           ..album = song.album ?? 'نامشخص'
+          ..albumId = song.albumId // ← ذخیره albumId
           ..genre = song.genre
           ..trackNumber = song.track
           ..duration = song.duration ?? 0
@@ -42,6 +45,31 @@ class AudioQueryService {
       debugPrint('Error scanning songs: $e');
       return [];
     }
+  }
+
+  // =============================================
+  // 🖼️ گرفتن کاور با albumId مستقیم
+  // =============================================
+  Future<Uint8List?> getAlbumArtwork(int albumId) async {
+    try {
+      return await _audioQuery.queryArtwork(
+        albumId,
+        ArtworkType.ALBUM,
+      );
+    } catch (e) {
+      debugPrint('Error getting album artwork: $e');
+      return null;
+    }
+  }
+
+  // =============================================
+  // 🖼️ گرفتن کاور با SongModel (سریع)
+  // =============================================
+  Future<Uint8List?> getArtworkBySong(my_song.SongModel song) async {
+    if (song.albumId != null) {
+      return await getAlbumArtwork(song.albumId!);
+    }
+    return null;
   }
 
   // =============================================
@@ -84,36 +112,6 @@ class AudioQueryService {
     } catch (e) {
       debugPrint('Error scanning artists: $e');
       return [];
-    }
-  }
-
-  // =============================================
-  // 🖼️ گرفتن کاور آلبوم
-  // =============================================
-  Future<List<int>?> getAlbumArtwork(int albumId) async {
-    try {
-      return await _audioQuery.queryArtwork(
-        albumId,
-        ArtworkType.ALBUM,
-      );
-    } catch (e) {
-      debugPrint('Error getting album artwork: $e');
-      return null;
-    }
-  }
-
-  // =============================================
-  // 🖼️ گرفتن کاور هنرمند
-  // =============================================
-  Future<List<int>?> getArtistArtwork(int artistId) async {
-    try {
-      return await _audioQuery.queryArtwork(
-        artistId,
-        ArtworkType.ARTIST,
-      );
-    } catch (e) {
-      debugPrint('Error getting artist artwork: $e');
-      return null;
     }
   }
 

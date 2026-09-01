@@ -3,21 +3,45 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../data/datasources/local/audio_player_service.dart';
+import '../../data/datasources/local/isar_service.dart';
 import '../../data/models/song_model.dart';
+import '../../data/models/settings_model.dart';
 
 final playerProvider =
     StateNotifierProvider<PlayerNotifier, PlayerState>((ref) {
   final audioPlayerService = ref.watch(audioPlayerServiceProvider);
-  return PlayerNotifier(audioPlayerService);
+  final isarService = ref.watch(isarServiceProvider);
+  return PlayerNotifier(audioPlayerService, isarService);
 });
 
 class PlayerNotifier extends StateNotifier<PlayerState> {
   final AudioPlayerService _audioPlayerService;
+  final IsarService _isarService;
   List<SongModel> _currentPlaylist = [];
 
-  PlayerNotifier(this._audioPlayerService)
+  PlayerNotifier(this._audioPlayerService, this._isarService)
       : super(const PlayerState.initial()) {
     _listenToPlayer();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final settings = await _isarService.getSettings();
+    if (settings != null) {
+      state = state.copyWith(
+        shuffleEnabled: settings.shuffleEnabled,
+        repeatMode: settings.repeatMode,
+      );
+    }
+  }
+
+  Future<void> _saveSettings() async {
+    final settings = await _isarService.getSettings();
+    if (settings != null) {
+      settings.shuffleEnabled = state.shuffleEnabled;
+      settings.repeatMode = state.repeatMode;
+      await _isarService.saveSettings(settings);
+    }
   }
 
   void _listenToPlayer() {
@@ -66,8 +90,6 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       isPlaying: true,
       currentSong: songs[initialIndex],
       currentIndex: initialIndex,
-      shuffleEnabled: false,
-      repeatMode: 0,
     );
   }
 
@@ -91,25 +113,17 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
     await _audioPlayerService.previous();
   }
 
-  // =============================================
-  // 🔀 Shuffle - وقتی فعال میشه، Repeat خاموش میشه
-  // =============================================
   Future<void> toggleShuffle() async {
     final newShuffleValue = !state.shuffleEnabled;
 
-    // اگه می‌خوایم Shuffle رو فعال کنیم
     if (newShuffleValue) {
-      // Repeat رو خاموش کن
       await _audioPlayerService.setRepeat(LoopMode.off);
     }
 
-    // Shuffle رو تنظیم کن
     await _audioPlayerService.setShuffle(newShuffleValue);
+    await _saveSettings();
   }
 
-  // =============================================
-  // 🔁 Repeat - وقتی فعال میشه، Shuffle خاموش میشه
-  // =============================================
   Future<void> toggleRepeat() async {
     final nextMode = switch (state.repeatMode) {
       0 => LoopMode.all,
@@ -118,14 +132,12 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       _ => LoopMode.off,
     };
 
-    // اگه می‌خوایم Repeat رو فعال کنیم (از off خارج بشیم)
     if (nextMode != LoopMode.off) {
-      // Shuffle رو خاموش کن
       await _audioPlayerService.setShuffle(false);
     }
 
-    // Repeat رو تنظیم کن
     await _audioPlayerService.setRepeat(nextMode);
+    await _saveSettings();
   }
 }
 

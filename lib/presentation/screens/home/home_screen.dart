@@ -1,13 +1,21 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/artwork_cache.dart';
+import '../../../data/datasources/local/audio_query_service.dart';
 import '../../../data/models/song_model.dart';
 import '../../providers/music_providers.dart';
 import '../../providers/player_providers.dart';
 import '../../widgets/main_layout.dart';
 import '../player/now_playing_screen.dart';
+
+// Cache کوچیک برای لیست
+final ArtworkCache _smallArtworkCache = ArtworkCache(maxSize: 100);
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -30,50 +38,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _currentIndex = index;
         });
       },
-      child: ListView(
-        padding: const EdgeInsets.only(
-          top: 48,
-          left: 16,
-          right: 16,
-          bottom: 180,
+      child: songsAsync.when(
+        data: (songs) {
+          return _buildSongList(songs);
+        },
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
         ),
-        children: [
-          Text(
-            'کتابخانه موسیقی',
-            style: AppTextStyles.headline1,
-          ),
-          const SizedBox(height: 16),
-          _buildQuickAccessGrid(),
-          const SizedBox(height: 24),
-          Text(
-            'همه آهنگ‌ها',
-            style: AppTextStyles.headline4,
-          ),
-          const SizedBox(height: 12),
-          songsAsync.when(
-            data: (songs) {
-              if (songs.isEmpty) {
-                return const Center(
-                  child: Text('هیچ آهنگی پیدا نشد!'),
-                );
-              }
-              return Column(
-                children: songs.take(20).map((song) {
-                  return _buildSongTile(song, songs);
-                }).toList(),
-              );
-            },
-            loading: () => const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-              ),
-            ),
-            error: (error, stack) => Center(
-              child: Text('خطا: $error'),
-            ),
-          ),
-        ],
+        error: (error, stack) => Center(
+          child: Text('خطا: $error'),
+        ),
       ),
+    );
+  }
+
+  Widget _buildSongList(List<SongModel> songs) {
+    return ListView.builder(
+      padding: const EdgeInsets.only(
+        top: 48,
+        left: 16,
+        right: 16,
+        bottom: 180,
+      ),
+      itemCount: songs.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'کتابخانه موسیقی',
+                style: AppTextStyles.headline1,
+              ),
+              const SizedBox(height: 16),
+              _buildQuickAccessGrid(),
+              const SizedBox(height: 24),
+              Text(
+                'همه آهنگ‌ها',
+                style: AppTextStyles.headline4,
+              ),
+              const SizedBox(height: 12),
+            ],
+          );
+        }
+
+        final songIndex = index - 1;
+        return _buildSongTile(songs[songIndex], songs);
+      },
     );
   }
 
@@ -85,6 +96,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Container(
         height: 64,
         margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Row(
           children: [
             Container(
@@ -94,10 +109,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 color: AppColors.tertiary,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.music_note_rounded,
-                size: 24,
-                color: AppColors.textSecondary,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: _buildArtwork(song),
               ),
             ),
             const SizedBox(width: 12),
@@ -133,10 +147,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildArtwork(SongModel song) {
+    // 1. چک cache کوچیک
+    if (_smallArtworkCache.containsKey(song.filePath)) {
+      final cached = _smallArtworkCache.get(song.filePath);
+      if (cached != null) {
+        return Image.memory(
+          cached,
+          fit: BoxFit.cover,
+          cacheWidth: 96,
+          errorBuilder: (context, error, stack) => _placeholder(),
+        );
+      }
+      return _placeholder();
+    }
+
+    // 2. چک مسیر مستقیم
+    if (song.albumArtPath != null && song.albumArtPath!.isNotEmpty) {
+      final file = File(song.albumArtPath!);
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          fit: BoxFit.cover,
+          cacheWidth: 96,
+          errorBuilder: (context, error, stack) => _placeholder(),
+        );
+      }
+    }
+
+    // 3. از albumId بگیر
+    final audioQueryService = ref.read(audioQueryServiceProvider);
+
+    return FutureBuilder<Uint8List?>(
+      future: audioQueryService.getArtworkBySong(song).then((data) {
+        _smallArtworkCache.put(song.filePath, data);
+        return data;
+      }),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null) {
+          return Image.memory(
+            snapshot.data!,
+            fit: BoxFit.cover,
+            cacheWidth: 96,
+            errorBuilder: (context, error, stack) => _placeholder(),
+          );
+        }
+        return _placeholder();
+      },
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: AppColors.tertiary,
+      child: const Icon(
+        Icons.music_note_rounded,
+        size: 24,
+        color: AppColors.textSecondary,
+      ),
+    );
+  }
+
   Future<void> _playSong(SongModel song, List<SongModel> allSongs) async {
     try {
-      final filePaths = allSongs.map((s) => s.filePath).toList();
-      final int initialIndex = allSongs.indexWhere((s) => s.id == song.id);
+      final initialIndex = allSongs.indexWhere((s) => s.id == song.id);
 
       await ref
           .read(playerProvider.notifier)
@@ -154,15 +228,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     } catch (e) {
       debugPrint('Error playing song: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطا در پخش: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
     }
   }
 

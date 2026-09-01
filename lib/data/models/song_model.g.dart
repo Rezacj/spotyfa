@@ -27,53 +27,58 @@ const SongModelSchema = CollectionSchema(
       name: r'albumArtPath',
       type: IsarType.string,
     ),
-    r'artist': PropertySchema(
+    r'albumId': PropertySchema(
       id: 2,
+      name: r'albumId',
+      type: IsarType.long,
+    ),
+    r'artist': PropertySchema(
+      id: 3,
       name: r'artist',
       type: IsarType.string,
     ),
     r'dateAdded': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'dateAdded',
       type: IsarType.dateTime,
     ),
     r'duration': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'duration',
       type: IsarType.long,
     ),
     r'filePath': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'filePath',
       type: IsarType.string,
     ),
     r'genre': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'genre',
       type: IsarType.string,
     ),
     r'isFavorite': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'isFavorite',
       type: IsarType.bool,
     ),
     r'lastPlayed': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'lastPlayed',
       type: IsarType.dateTime,
     ),
     r'playCount': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'playCount',
       type: IsarType.long,
     ),
     r'title': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'title',
       type: IsarType.string,
     ),
     r'trackNumber': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'trackNumber',
       type: IsarType.long,
     )
@@ -178,16 +183,17 @@ void _songModelSerialize(
 ) {
   writer.writeString(offsets[0], object.album);
   writer.writeString(offsets[1], object.albumArtPath);
-  writer.writeString(offsets[2], object.artist);
-  writer.writeDateTime(offsets[3], object.dateAdded);
-  writer.writeLong(offsets[4], object.duration);
-  writer.writeString(offsets[5], object.filePath);
-  writer.writeString(offsets[6], object.genre);
-  writer.writeBool(offsets[7], object.isFavorite);
-  writer.writeDateTime(offsets[8], object.lastPlayed);
-  writer.writeLong(offsets[9], object.playCount);
-  writer.writeString(offsets[10], object.title);
-  writer.writeLong(offsets[11], object.trackNumber);
+  writer.writeLong(offsets[2], object.albumId);
+  writer.writeString(offsets[3], object.artist);
+  writer.writeDateTime(offsets[4], object.dateAdded);
+  writer.writeLong(offsets[5], object.duration);
+  writer.writeString(offsets[6], object.filePath);
+  writer.writeString(offsets[7], object.genre);
+  writer.writeBool(offsets[8], object.isFavorite);
+  writer.writeDateTime(offsets[9], object.lastPlayed);
+  writer.writeLong(offsets[10], object.playCount);
+  writer.writeString(offsets[11], object.title);
+  writer.writeLong(offsets[12], object.trackNumber);
 }
 
 SongModel _songModelDeserialize(
@@ -199,17 +205,18 @@ SongModel _songModelDeserialize(
   final object = SongModel();
   object.album = reader.readString(offsets[0]);
   object.albumArtPath = reader.readStringOrNull(offsets[1]);
-  object.artist = reader.readString(offsets[2]);
-  object.dateAdded = reader.readDateTime(offsets[3]);
-  object.duration = reader.readLong(offsets[4]);
-  object.filePath = reader.readString(offsets[5]);
-  object.genre = reader.readStringOrNull(offsets[6]);
+  object.albumId = reader.readLongOrNull(offsets[2]);
+  object.artist = reader.readString(offsets[3]);
+  object.dateAdded = reader.readDateTime(offsets[4]);
+  object.duration = reader.readLong(offsets[5]);
+  object.filePath = reader.readString(offsets[6]);
+  object.genre = reader.readStringOrNull(offsets[7]);
   object.id = id;
-  object.isFavorite = reader.readBool(offsets[7]);
-  object.lastPlayed = reader.readDateTimeOrNull(offsets[8]);
-  object.playCount = reader.readLong(offsets[9]);
-  object.title = reader.readString(offsets[10]);
-  object.trackNumber = reader.readLongOrNull(offsets[11]);
+  object.isFavorite = reader.readBool(offsets[8]);
+  object.lastPlayed = reader.readDateTimeOrNull(offsets[9]);
+  object.playCount = reader.readLong(offsets[10]);
+  object.title = reader.readString(offsets[11]);
+  object.trackNumber = reader.readLongOrNull(offsets[12]);
   return object;
 }
 
@@ -225,24 +232,26 @@ P _songModelDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 3:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
-    case 6:
-      return (reader.readStringOrNull(offset)) as P;
-    case 7:
-      return (reader.readBool(offset)) as P;
-    case 8:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 9:
       return (reader.readLong(offset)) as P;
-    case 10:
+    case 6:
       return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
+    case 8:
+      return (reader.readBool(offset)) as P;
+    case 9:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 10:
+      return (reader.readLong(offset)) as P;
     case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -968,6 +977,75 @@ extension SongModelQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'albumArtPath',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterFilterCondition> albumIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'albumId',
+      ));
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterFilterCondition> albumIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'albumId',
+      ));
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterFilterCondition> albumIdEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'albumId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterFilterCondition> albumIdGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'albumId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterFilterCondition> albumIdLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'albumId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterFilterCondition> albumIdBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'albumId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1908,6 +1986,18 @@ extension SongModelQuerySortBy on QueryBuilder<SongModel, SongModel, QSortBy> {
     });
   }
 
+  QueryBuilder<SongModel, SongModel, QAfterSortBy> sortByAlbumId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'albumId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterSortBy> sortByAlbumIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'albumId', Sort.desc);
+    });
+  }
+
   QueryBuilder<SongModel, SongModel, QAfterSortBy> sortByArtist() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'artist', Sort.asc);
@@ -2052,6 +2142,18 @@ extension SongModelQuerySortThenBy
   QueryBuilder<SongModel, SongModel, QAfterSortBy> thenByAlbumArtPathDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'albumArtPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterSortBy> thenByAlbumId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'albumId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SongModel, SongModel, QAfterSortBy> thenByAlbumIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'albumId', Sort.desc);
     });
   }
 
@@ -2204,6 +2306,12 @@ extension SongModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<SongModel, SongModel, QDistinct> distinctByAlbumId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'albumId');
+    });
+  }
+
   QueryBuilder<SongModel, SongModel, QDistinct> distinctByArtist(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2286,6 +2394,12 @@ extension SongModelQueryProperty
   QueryBuilder<SongModel, String?, QQueryOperations> albumArtPathProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'albumArtPath');
+    });
+  }
+
+  QueryBuilder<SongModel, int?, QQueryOperations> albumIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'albumId');
     });
   }
 

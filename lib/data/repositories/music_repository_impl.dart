@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../datasources/local/audio_query_service.dart';
@@ -19,12 +21,23 @@ class MusicRepository {
   MusicRepository(this._isarService, this._audioQueryService);
 
   // =============================================
-  // 🎵 اسکن و ذخیره همه آهنگ‌ها
+  // 🎵 اسکن و ذخیره همه آهنگ‌ها - با Isolate
   // =============================================
   Future<int> scanAndSaveAllSongs() async {
-    final songs = await _audioQueryService.scanAllSongs();
+    final receivePort = ReceivePort();
+
+    await Isolate.spawn(_scanSongsInIsolate, receivePort.sendPort);
+
+    final songs = await receivePort.first as List<SongModel>;
+
     await _isarService.saveAllSongs(songs);
     return songs.length;
+  }
+
+  static void _scanSongsInIsolate(SendPort sendPort) async {
+    final audioQuery = AudioQueryService();
+    final songs = await audioQuery.scanAllSongs();
+    sendPort.send(songs);
   }
 
   // =============================================

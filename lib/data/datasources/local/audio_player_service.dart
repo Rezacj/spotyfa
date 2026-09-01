@@ -59,25 +59,61 @@ class AudioPlayerService {
     }
   }
 
-  // آهنگ بعدی
+  // =============================================
+  // ⏭️ آهنگ بعدی
+  // =============================================
   Future<void> next() async {
     try {
-      if (_player.hasNext) {
+      if (_player.shuffleModeEnabled) {
         await _player.seekToNext();
-        _player.play();
+      } else {
+        final currentIndex = _player.currentIndex ?? 0;
+        final totalSongs = _player.sequence?.length ?? 0;
+
+        if (totalSongs == 0) return;
+
+        final nextIndex = (currentIndex + 1) % totalSongs;
+
+        await _player.seek(
+          Duration.zero,
+          index: nextIndex,
+        );
       }
+      _player.play();
     } catch (e) {
       debugPrint('Error next: $e');
     }
   }
 
-  // آهنگ قبلی
+  // =============================================
+  // ⏮️ آهنگ قبلی
+  // =============================================
   Future<void> previous() async {
     try {
-      if (_player.hasPrevious) {
-        await _player.seekToPrevious();
+      // اگه بیشتر از ۵ ثانیه از آهنگ گذشته، برگرد به اول همون آهنگ
+      if (_player.position > const Duration(seconds: 5)) {
+        await _player.seek(Duration.zero);
         _player.play();
+        return;
       }
+
+      // اگه کمتر از ۵ ثانیه گذشته، برو به آهنگ قبلی
+      if (_player.shuffleModeEnabled) {
+        await _player.seekToPrevious();
+      } else {
+        final currentIndex = _player.currentIndex ?? 0;
+        final totalSongs = _player.sequence?.length ?? 0;
+
+        if (totalSongs == 0) return;
+
+        final previousIndex = (currentIndex - 1 + totalSongs) % totalSongs;
+
+        await _player.seek(
+          Duration.zero,
+          index: previousIndex,
+        );
+      }
+      _player.play();
     } catch (e) {
       debugPrint('Error previous: $e');
     }
@@ -88,7 +124,6 @@ class AudioPlayerService {
     try {
       await _player.setShuffleModeEnabled(enabled);
       debugPrint('Shuffle set to: $enabled');
-      debugPrint('Shuffle mode is now: ${_player.shuffleModeEnabled}');
     } catch (e) {
       debugPrint('Error shuffle: $e');
     }
@@ -99,7 +134,6 @@ class AudioPlayerService {
     try {
       await _player.setLoopMode(mode);
       debugPrint('Repeat set to: $mode');
-      debugPrint('Loop mode is now: ${_player.loopMode}');
     } catch (e) {
       debugPrint('Error repeat: $e');
     }
@@ -117,8 +151,8 @@ class AudioPlayerService {
   bool get isPlaying => _player.playing;
   Duration get position => _player.position;
   Duration? get duration => _player.duration;
-  bool get hasNext => _player.hasNext;
-  bool get hasPrevious => _player.hasPrevious;
+  int? get currentIndex => _player.currentIndex;
+  int get sequenceLength => _player.sequence?.length ?? 0;
   bool get isShuffleEnabled => _player.shuffleModeEnabled;
   LoopMode get loopMode => _player.loopMode;
 

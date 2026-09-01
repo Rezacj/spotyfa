@@ -1,12 +1,19 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/artwork_cache.dart';
+import '../../../data/datasources/local/audio_query_service.dart';
+import '../../../data/datasources/local/isar_service.dart';
 import '../../../data/models/song_model.dart';
 import '../../providers/player_providers.dart';
+
+// Cache بزرگ برای NowPlaying
+final ArtworkCache _fullArtworkCache = ArtworkCache(maxSize: 30);
 
 class NowPlayingScreen extends ConsumerWidget {
   final SongModel song;
@@ -22,12 +29,13 @@ class NowPlayingScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final playerState = ref.watch(playerProvider);
     final currentSong = playerState.currentSong ?? song;
+    final isarService = ref.watch(isarServiceProvider);
+    final isFavorite = currentSong.isFavorite;
 
     return Scaffold(
       backgroundColor: AppColors.secondary,
       body: Stack(
         children: [
-          // Background gradients
           Positioned.fill(
             child: Opacity(
               opacity: 0.4,
@@ -63,11 +71,9 @@ class NowPlayingScreen extends ConsumerWidget {
               ),
             ),
           ),
-          // Main content
           SafeArea(
             child: Column(
               children: [
-                // Header - فقط دکمه برگشت
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -91,7 +97,6 @@ class NowPlayingScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // Album Art
                 Expanded(
                   child: Center(
                     child: Container(
@@ -109,12 +114,11 @@ class NowPlayingScreen extends ConsumerWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: _buildAlbumArt(currentSong),
+                        child: _buildAlbumArt(currentSong, ref),
                       ),
                     ),
                   ),
                 ),
-                // Song Info
                 Column(
                   children: [
                     Text(
@@ -137,7 +141,6 @@ class NowPlayingScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Seek Bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
@@ -179,15 +182,11 @@ class NowPlayingScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // =============================================
-                // Playback Controls - RTL آگاه
-                // =============================================
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Shuffle (سمت راست)
                       IconButton(
                         onPressed: () {
                           ref.read(playerProvider.notifier).toggleShuffle();
@@ -200,18 +199,16 @@ class NowPlayingScreen extends ConsumerWidget {
                               : AppColors.textSecondary,
                         ),
                       ),
-                      // Previous (به سمت راست اشاره میکنه)
                       IconButton(
                         onPressed: () {
                           ref.read(playerProvider.notifier).previous();
                         },
                         icon: const Icon(
-                          Icons.skip_previous_rounded,
+                          Icons.skip_next_rounded,
                           size: 32,
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      // Play/Pause
                       GestureDetector(
                         onTap: () {
                           ref.read(playerProvider.notifier).togglePlayPause();
@@ -238,18 +235,16 @@ class NowPlayingScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      // Next (به سمت چپ اشاره میکنه)
                       IconButton(
                         onPressed: () {
                           ref.read(playerProvider.notifier).next();
                         },
                         icon: const Icon(
-                          Icons.skip_next_rounded,
+                          Icons.skip_previous_rounded,
                           size: 32,
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      // Repeat (سمت چپ)
                       IconButton(
                         onPressed: () {
                           ref.read(playerProvider.notifier).toggleRepeat();
@@ -268,18 +263,23 @@ class NowPlayingScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Footer
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.favorite_border_rounded,
+                        onPressed: () async {
+                          await _toggleFavorite(currentSong, isarService);
+                        },
+                        icon: Icon(
+                          isFavorite
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
                           size: 24,
-                          color: AppColors.textPrimary,
+                          color: isFavorite
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
                         ),
                       ),
                       IconButton(
@@ -302,7 +302,34 @@ class NowPlayingScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAlbumArt(SongModel song) {
+  Future<void> _toggleFavorite(
+    SongModel song,
+    IsarService isarService,
+  ) async {
+    try {
+      song.isFavorite = !song.isFavorite;
+      await isarService.saveSong(song);
+      debugPrint('Favorite toggled: ${song.isFavorite}');
+    } catch (e) {
+      debugPrint('Error toggling favorite: $e');
+    }
+  }
+
+  Widget _buildAlbumArt(SongModel song, WidgetRef ref) {
+    // 1. چک cache بزرگ
+    if (_fullArtworkCache.containsKey(song.filePath)) {
+      final cached = _fullArtworkCache.get(song.filePath);
+      if (cached != null) {
+        return Image.memory(
+          cached,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stack) => _placeholder(),
+        );
+      }
+      return _placeholder();
+    }
+
+    // 2. چک مسیر مستقیم
     if (song.albumArtPath != null && song.albumArtPath!.isNotEmpty) {
       final file = File(song.albumArtPath!);
       if (file.existsSync()) {
@@ -313,7 +340,26 @@ class NowPlayingScreen extends ConsumerWidget {
         );
       }
     }
-    return _placeholder();
+
+    // 3. از queryArtwork بگیر - کیفیت کامل
+    final audioQueryService = ref.read(audioQueryServiceProvider);
+
+    return FutureBuilder<Uint8List?>(
+      future: audioQueryService.getArtworkBySong(song).then((data) {
+        _fullArtworkCache.put(song.filePath, data);
+        return data;
+      }),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null) {
+          return Image.memory(
+            snapshot.data!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stack) => _placeholder(),
+          );
+        }
+        return _placeholder();
+      },
+    );
   }
 
   Widget _placeholder() {

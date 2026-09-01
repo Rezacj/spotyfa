@@ -31,6 +31,16 @@ const AlbumModelSchema = CollectionSchema(
       id: 2,
       name: r'name',
       type: IsarType.string,
+    ),
+    r'songCount': PropertySchema(
+      id: 3,
+      name: r'songCount',
+      type: IsarType.long,
+    ),
+    r'year': PropertySchema(
+      id: 4,
+      name: r'year',
+      type: IsarType.long,
     )
   },
   estimateSize: _albumModelEstimateSize,
@@ -107,6 +117,8 @@ void _albumModelSerialize(
   writer.writeString(offsets[0], object.artist);
   writer.writeString(offsets[1], object.coverPath);
   writer.writeString(offsets[2], object.name);
+  writer.writeLong(offsets[3], object.songCount);
+  writer.writeLong(offsets[4], object.year);
 }
 
 AlbumModel _albumModelDeserialize(
@@ -120,6 +132,7 @@ AlbumModel _albumModelDeserialize(
   object.coverPath = reader.readStringOrNull(offsets[1]);
   object.id = id;
   object.name = reader.readString(offsets[2]);
+  object.year = reader.readLongOrNull(offsets[4]);
   return object;
 }
 
@@ -136,6 +149,10 @@ P _albumModelDeserializeProp<P>(
       return (reader.readStringOrNull(offset)) as P;
     case 2:
       return (reader.readString(offset)) as P;
+    case 3:
+      return (reader.readLong(offset)) as P;
+    case 4:
+      return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -788,6 +805,129 @@ extension AlbumModelQueryFilter
       ));
     });
   }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> songCountEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'songCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition>
+      songCountGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'songCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> songCountLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'songCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> songCountBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'songCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> yearIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'year',
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> yearIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'year',
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> yearEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'year',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> yearGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'year',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> yearLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'year',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterFilterCondition> yearBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'year',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension AlbumModelQueryObject
@@ -893,6 +1033,30 @@ extension AlbumModelQuerySortBy
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterSortBy> sortBySongCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'songCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterSortBy> sortBySongCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'songCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterSortBy> sortByYear() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'year', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterSortBy> sortByYearDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'year', Sort.desc);
+    });
+  }
 }
 
 extension AlbumModelQuerySortThenBy
@@ -944,6 +1108,30 @@ extension AlbumModelQuerySortThenBy
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterSortBy> thenBySongCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'songCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterSortBy> thenBySongCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'songCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterSortBy> thenByYear() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'year', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QAfterSortBy> thenByYearDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'year', Sort.desc);
+    });
+  }
 }
 
 extension AlbumModelQueryWhereDistinct
@@ -966,6 +1154,18 @@ extension AlbumModelQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QDistinct> distinctBySongCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'songCount');
+    });
+  }
+
+  QueryBuilder<AlbumModel, AlbumModel, QDistinct> distinctByYear() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'year');
     });
   }
 }
@@ -993,6 +1193,18 @@ extension AlbumModelQueryProperty
   QueryBuilder<AlbumModel, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<AlbumModel, int, QQueryOperations> songCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'songCount');
+    });
+  }
+
+  QueryBuilder<AlbumModel, int?, QQueryOperations> yearProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'year');
     });
   }
 }

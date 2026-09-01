@@ -13,6 +13,7 @@ class SongModel {
   late String artist;
   late String album;
 
+  int? albumId; // ← اضافه شد
   String? albumArtPath;
   String? genre;
   int? trackNumber;

@@ -143,4 +143,26 @@ class IsarService {
   Future<void> close() async {
     await _isar.close();
   }
+
+// اضافه کردن آهنگ به آلبوم
+  Future<void> addSongToAlbum(int albumId, int songId) async {
+    await _isar.writeTxn(() async {
+      final album = await _isar.albumModels.get(albumId);
+      final song = await _isar.songModels.get(songId);
+      if (album != null && song != null) {
+        album.songs.add(song);
+        await album.songs.save();
+      }
+    });
+  }
+
+  // گرفتن آهنگ‌های یک آلبوم
+// گرفتن آهنگ‌های یک آلبوم
+  Future<List<SongModel>> getAlbumSongs(int albumId) async {
+    final album = await _isar.albumModels.get(albumId);
+    if (album == null) return [];
+
+    await album.songs.load();
+    return album.songs.toList();
+  }
 }

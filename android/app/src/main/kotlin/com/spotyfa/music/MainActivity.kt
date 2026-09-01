@@ -1,4 +1,4 @@
-package com.example.spotyfa
+package com.spotyfa.music
 
 import io.flutter.embedding.android.FlutterActivity
 
